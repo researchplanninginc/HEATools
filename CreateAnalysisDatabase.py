@@ -47,8 +47,9 @@ try:
 
     # Script arguments...
     projDir = sys.argv[1]
-    projName = sys.argv[2]
+    projNameIn = sys.argv[2]
     analystName = sys.argv[3]
+    projName = ARD_HEA_Tools.sanitize(projNameIn)
 
     # Local variables...
     geoDBname = projName + "_GIS.mdb"
@@ -122,10 +123,10 @@ try:
 
     # Add fields to site attribute table...
     arcpy.AddField_management(SiteAttr, "GRID_ID", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
-    arcpy.AddField_management(SiteAttr, "HABITAT_ID", "TEXT", "", "", "20", "", "NON_NULLABLE", "REQUIRED", "")
-    arcpy.AddField_management(SiteAttr, "CONDITION_ID", "TEXT", "", "", "20", "", "NON_NULLABLE", "REQUIRED", "")
-    arcpy.AddField_management(SiteAttr, "REMEDIATION_ID", "TEXT", "", "", "20", "", "NON_NULLABLE", "REQUIRED", "")
-    arcpy.AddField_management(SiteAttr, "SUBSITE_ID", "TEXT", "", "", "20", "", "NON_NULLABLE", "REQUIRED", "")
+    arcpy.AddField_management(SiteAttr, "HABITAT_ID", "TEXT", "", "", "50", "", "NON_NULLABLE", "REQUIRED", "")
+    arcpy.AddField_management(SiteAttr, "CONDITION_ID", "TEXT", "", "", "2", "", "NON_NULLABLE", "REQUIRED", "")
+    arcpy.AddField_management(SiteAttr, "REMEDIATION_ID", "TEXT", "", "", "50", "", "NON_NULLABLE", "REQUIRED", "")
+    arcpy.AddField_management(SiteAttr, "SUBSITE_ID", "TEXT", "", "", "50", "", "NON_NULLABLE", "REQUIRED", "")
     arcpy.AddField_management(SiteAttr, "DEPTH_ID", "TEXT", "", "", "20", "", "NON_NULLABLE", "REQUIRED", "")
     arcpy.AddIndex_management(SiteAttr, "GRID_ID", "SATT_GRD_IDX", "NON_UNIQUE", "NON_ASCENDING")
     arcpy.AddIndex_management(SiteAttr, "HABITAT_ID", "SATT_HID_IDX", "NON_UNIQUE", "NON_ASCENDING")

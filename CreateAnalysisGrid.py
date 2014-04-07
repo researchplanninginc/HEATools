@@ -115,8 +115,9 @@ try:
     count = rowGrid.COUNT
     del rowGrid
     del rowsGrid
-    if count >= 200000:
-        raise toobig
+    if count >= 500000:
+        arcpy.AddMessage("  Warning! Cell count : "+str(count)+" is greater than 500,000 and may slow down processing")
+        # raise toobig
     else:
         arcpy.AddMessage("  Cell count: "+str(count))
 

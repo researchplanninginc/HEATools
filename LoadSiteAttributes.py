@@ -100,10 +100,8 @@ try:
     conType = sys.argv[4]
     remStat = sys.argv[5]
     subSite = sys.argv[6]
-    depth = sys.argv[7]
-    siteDoc = sys.argv[8]
-
-    arcpy.AddMessage("habType: " + habType + ", conType: " + conType)
+    siteDoc = sys.argv[7]
+    depth = "-not applicable-"
 
     # Local variables...
     desc = arcpy.Describe(inLayer)
