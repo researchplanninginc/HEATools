@@ -56,13 +56,17 @@ try:
     geoDB = sys.argv[1]
     resDB = sys.argv[2]
     scnDB = sys.argv[3]
+    ischecked = sys.argv[4]
 
     # Local variables...
     inPts = geoDB + "\\ANALYSIS_PNTS"
     usrTbl = geoDB + "\\ANALYSIS_RESULTS"
     scnTbl = geoDB + "\\ANALYSIS_SCENARIOS"
+    tmpDSAYTbl = geoDB + "\\DSAY_RESULTS"
+    tmpInjTbl = geoDB + "\\PERCENT_INJURY_RESULTS"
     
     resTbl = resDB + "\\ANALYSIS_DSAY_By_Grid_Year"
+    injTbl = resDB + "\\ANALYSIS_Perc_Injury_Summary_by_Grid"
     genTbl = scnDB + "\\USER_General_Inputs"
 
     AnalysisGrid = geoDB + "\\ANALYSIS_GRID"
@@ -72,6 +76,8 @@ try:
 
     if arcpy.Exists(resTbl) == False:
         raise noresults
+    if str(ischecked) == 'true' and arcpy.Exists(injTbl) == False:
+        raise nopctinjury
     
     desc = arcpy.Describe(AnalysisGrid)
     grdCellSize = desc.MeanCellHeight
@@ -89,7 +95,20 @@ try:
     arcpy.AddMessage("Getting analysis results...")
     if arcpy.Exists(usrTbl):
         arcpy.Delete_management(usrTbl)
-    arcpy.TableToTable_conversion(resTbl, geoDB, "ANALYSIS_RESULTS")
+    if str(ischecked) == 'true':
+        arcpy.TableToTable_conversion(resTbl, geoDB, "DSAY_RESULTS")
+        arcpy.TableToTable_conversion(injTbl, geoDB, "PERCENT_INJURY_RESULTS")
+        arcpy.AddField_management(tmpDSAYTbl, "TMPJOIN", "TEXT")
+        arcpy.CalculateField_management(tmpDSAYTbl, "TMPJOIN", "str(!Grid_ID!) + '_' + str(!ExpYear!)", "PYTHON")
+        arcpy.AddField_management (tmpInjTbl, "TMPJOIN", "TEXT")
+        arcpy.CalculateField_management(tmpInjTbl, "TMPJOIN", "str(!Grid_ID!) + '_' + str(!ExpYear!)", "PYTHON")
+        arcpy.TableToTable_conversion(tmpDSAYTbl, geoDB, "ANALYSIS_RESULTS")
+        arcpy.JoinField_management(usrTbl, "TMPJOIN", tmpInjTbl, "TMPJOIN", "PERCENT_INJURY")
+        arcpy.DeleteField_management(usrTbl, "TMPJOIN")
+        arcpy.Delete_management(tmpDSAYTbl)
+        arcpy.Delete_management(tmpInjTbl)
+    else:
+	arcpy.TableToTable_conversion(resTbl, geoDB, "ANALYSIS_RESULTS")
 
     # Search results table for scenarios count and maximum year
     valueList = []
@@ -129,18 +148,24 @@ try:
         if arcpy.Exists(outPts):
             arcpy.Delete_management(outPts)               
         outDSAY = geoDB + "\\SC" + str(scen) + "_" + scname + "_DSAY"
+	outPCT = geoDB + "\\SC" + str(scen) + "_" + scname + "_PCT_INJ"
         if arcpy.Exists(outDSAY):
             arcpy.Delete_management(outDSAY)
 
         #Make temp point layer with appropriate fields
         arcpy.AddMessage("Creating output for Scenario #:" + str(scen) + ", Name: " + scname )
         arcpy.MakeTableView_management(usrTbl, "tmpTbl", "[Scenario_Id] = "+ str(scen))
-        arcpy.Statistics_analysis("tmpTbl", outTbl, "DSAY_Injury sum; SAY_Injury max; ExpYear MAX", "Grid_ID") 
+        if str(ischecked) == 'true':
+            arcpy.Statistics_analysis("tmpTbl", outTbl, "DSAY_Injury SUM; SAY_Injury MAX; ExpYear MAX; PERCENT_INJURY MAX", "Grid_ID") 
+        else:
+            arcpy.Statistics_analysis("tmpTbl", outTbl, "DSAY_Injury SUM; SAY_Injury MAX; ExpYear MAX", "Grid_ID") 
         arcpy.MakeFeatureLayer_management(inPts, "SiteJoinView")
         arcpy.AddJoin_management("SiteJoinView", "GRID_ID", outTbl, "GRID_ID", "KEEP_ALL")
         arcpy.CopyFeatures_management("SiteJoinView", outPts)
         arcpy.AddField_management(outPts, "DSAY_INJ", "DOUBLE", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
         arcpy.AddField_management(outPts, "SAY_INJ", "DOUBLE", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+        if str(ischecked) == 'true':
+	    arcpy.AddField_management(outPts, "PCT_INJ", "DOUBLE", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
         arcpy.AddField_management(outPts, "MAX_YEAR", "DOUBLE", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
 
         #Update DSAY values
@@ -148,18 +173,26 @@ try:
         row = rows.next()
         while row:
             if row.sum_DSAY_Injury is not None:
-                row.DSAY_INJ = row.sum_DSAY_Injury
-                row.SAY_INJ = row.max_SAY_Injury
+                row.DSAY_INJ = row.SUM_DSAY_Injury
+                row.SAY_INJ = row.MAX_SAY_Injury
+                if str(ischecked) == 'true':
+                    row.PCT_INJ = row.MAX_PERCENT_INJURY
                 row.MAX_YEAR = row.MAX_ExpYear
             else:
                 row.DSAY_INJ = 0
-                row.SAY_INJ = 0              
+                row.SAY_INJ = 0
+                if str(ischecked) == 'true':
+                    row.PCT_INJ = 0
             rows.updateRow(row)
             row = rows.next()
         del row
         del rows
-        arcpy.DeleteField_management(outPts, "GRID_ID_1; FREQUENCY; sum_DSAY_Injury; max_SAY_Injury; MAX_ExpYear")
-        arcpy.PointToRaster_conversion(outPts, "DSAY_INJ", outDSAY, "MAXIMUM", "NONE", grdCellSize)
+        arcpy.DeleteField_management(outPts, "GRID_ID_1; FREQUENCY; SUM_DSAY_Injury; MAX_SAY_Injury; MAX_ExpYear")
+        if str(ischecked) == 'true':
+            arcpy.DeleteField_management(outPts, "MAX_PERCENT_INJURY")
+        arcpy.PointToRaster_conversion(outPts, "DSAY_INJ", outDSAY, "MAXIMUM", "", grdCellSize)
+        if str(ischecked) == 'true':
+            arcpy.PointToRaster_conversion(outPts, "PCT_INJ", outPCT, "MAXIMUM", "", grdCellSize)
 
         #Import metadata template...
         arcpy.ImportMetadata_conversion(xmlTemp, "FROM_FGDC", outDSAY)
@@ -170,6 +203,10 @@ try:
 except noresults:
     arcpy.AddError("\n*** ERROR *** " + resTbl + ": Cannot find results table(s).  Make sure you have selected a valid HEA calculation database.\n")
     print "\n*** ERROR *** " + resTbl + ": Cannot find results table(s).  Make sure you have selected a valid HEA calculation database.\n"    
+
+except nopctinjury:
+    arcpy.AddError("\n*** ERROR *** " + resTbl + ": Cannot find the ANALYSIS_Perc_Injury_Summary_by_Grid table.\n")
+    print "\n*** ERROR *** " + resTbl + ": Cannot find the ANALYSIS_Perc_Injury_Summary_by_Grid table.\n"
 
 except arcpy.ExecuteError:
     # Get the tool error messages
