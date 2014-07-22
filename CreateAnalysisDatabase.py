@@ -23,6 +23,7 @@
 #                June 1, 2011       - Edited for Arc 10.0 functionality, and changed data structure to store site attr. docs and analyst name
 #                September 15, 2012 - Changed to create project folder and geoDB within, Additional bug fixes
 #                September 17, 2013 - Converted to arcpy
+#                July 21, 2014      - Added a FOOTPRINTS table for contaminant slices
 #
 # ---------------------------------------------------------------------------
 

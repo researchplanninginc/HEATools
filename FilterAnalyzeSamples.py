@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------------
 # NAME: FilterAnalyzeSamples.py
-# Version: 1.0 (ArcGIS 9.3, 10.0)
+# Version: 2.0 (ArcGIS 10.2)
 # Author: Research Planning, Inc.
 #
 # Usage: FilterAnalyzeSamples <input_analysis_database> <input_contaminant_layer> <value_field>
