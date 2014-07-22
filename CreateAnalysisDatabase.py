@@ -60,6 +60,7 @@ try:
     COCInvent = geoDB + "\\COC_INVENTORY"
     SiteAttr = geoDB + "\\SITE_ATTRIBUTES"
     COCAnalysis = geoDB + "\\ANALYSIS_TABLE"
+    Footprint = geoDB + "\\FOOTPRINTS"
 
     # Create analysis folder
     arcpy.CreateFolder_management(projDir, projName)
@@ -138,8 +139,17 @@ try:
     arcpy.AssignDefaultToField_management(SiteAttr, "REMEDIATION_ID", "NA")
     arcpy.AssignDefaultToField_management(SiteAttr, "SUBSITE_ID", "NA")
     arcpy.AssignDefaultToField_management(SiteAttr, "DEPTH_ID", "NA")
-    arcpy.AddMessage("Created analysis database "+geoDB)
+
+    # Create footprints table
+    arcpy.CreateTable_management(geoDB, "FOOTPRINTS", "", "")
+
+    # Add fields to footprints table
+    arcpy.AddField_management(Footprint, "GRID_ID", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+    arcpy.AddField_management(Footprint, "SCENARIO_ID", "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+    arcpy.AddField_management(Footprint, "COC_NAME", "TEXT", "", "", "20", "", "NULLABLE", "NON_REQUIRED", "")
+    arcpy.AddField_management(Footprint, "FOOTPRINT_ID", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
     
+    arcpy.AddMessage("Created analysis database "+geoDB)
     arcpy.AddMessage("Updating project attributes...")
     rows = arcpy.InsertCursor(prjAttr)
     row = rows.newRow()

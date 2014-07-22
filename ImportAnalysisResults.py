@@ -195,7 +195,8 @@ try:
             arcpy.PointToRaster_conversion(outPts, "PCT_INJ", outPCT, "MAXIMUM", "", grdCellSize)
 
         #Import metadata template...
-        arcpy.ImportMetadata_conversion(xmlTemp, "FROM_FGDC", outDSAY)
+	arcpy.AddMessage("importing metadata from " + xmlTemp + " to " + outDSAY)
+        arcpy.ImportMetadata_conversion(xmlTemp, "FROM_FGDC", outDSAY, "ENABLED")
         # arcpy.MetadataImporter_conversion(xmlTemp, outDSAY)
         arcpy.Delete_management(outTbl)
         arcpy.Delete_management(outPts)
