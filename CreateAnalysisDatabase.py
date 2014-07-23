@@ -90,7 +90,6 @@ try:
     arcpy.AddField_management(COCData, "GRID_ID", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
     arcpy.AddField_management(COCData, "COC_NAME", "TEXT", "", "", "20", "", "NULLABLE", "NON_REQUIRED", "")
     arcpy.AddField_management(COCData, "COC_VALUE", "FLOAT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
-    arcpy.AddField_management(COCData, "FOOTPRINT_ID", "TEXT", "", "", "20", "", "NULLABLE", "NON_REQUIRED", "")
     arcpy.AddIndex_management(COCData, "GRID_ID", "CDAT_GRD_IDX", "NON_UNIQUE", "NON_ASCENDING")
     arcpy.AddIndex_management(COCData, "COC_NAME", "CDAT_NAM_IDX", "NON_UNIQUE", "NON_ASCENDING")
 
