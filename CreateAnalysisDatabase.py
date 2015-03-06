@@ -100,8 +100,8 @@ try:
     arcpy.CreateTable_management(geoDB, "COC_INVENTORY", "", "")
 
     # Add fields and indexes to contaminant inventory table
-    arcpy.AddField_management(COCInvent, "COC_NAME", "TEXT", "", "", "20", "", "NULLABLE", "NON_REQUIRED", "")
-    arcpy.AddField_management(COCInvent, "COC_UNITS", "TEXT", "", "", "20", "", "NULLABLE", "NON_REQUIRED", "")
+    arcpy.AddField_management(COCInvent, "COC_NAME", "TEXT", "", "", "20", "", "NON_NULLABLE", "REQUIRED", "")
+    arcpy.AddField_management(COCInvent, "COC_UNITS", "TEXT", "", "", "20", "", "NON_NULLABLE", "REQUIRED", "")
     arcpy.AddField_management(COCInvent, "COC_QMDOC", "TEXT", "", "", "25000", "", "NULLABLE", "NON_REQUIRED", "")
     arcpy.AddField_management(COCInvent, "COC_XML", "TEXT", "", "", "600", "", "NULLABLE", "NON_REQUIRED", "")
     arcpy.AddField_management(COCInvent, "COC_NOTES", "TEXT", "", "", "20", "", "NULLABLE", "NON_REQUIRED", "")

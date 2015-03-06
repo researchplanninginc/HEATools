@@ -141,7 +141,16 @@ try:
     # Process: Delete Field
     arcpy.DeleteField_management(AnalysisPnts, "POINTID;GRID_CODE")
 
-    #Process: Update contaminant inventory table
+    # Process: Load GRID_IDs into SITE_ATTRIBUTES table
+    rows = arcpy.da.SearchCursor(AnalysisPnts, "GRID_ID")
+    cursor = arcpy.da.InsertCursor(SiteAttr, "GRID_ID")
+    for row in rows:
+        vals = [(row[0])]
+        cursor.insertRow(vals)
+    del cursor
+    del rows
+
+    #Process: Update project attributes table
     desc = arcpy.Describe(AnalysisGrid)
     units = desc.SpatialReference.LinearUnitName.upper()
     rows = arcpy.UpdateCursor(prjAttr)

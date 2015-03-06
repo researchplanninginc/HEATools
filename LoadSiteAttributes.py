@@ -30,6 +30,7 @@
 #                June 1, 2011       - Edited for Arc 10.0 functionality, added site attribute documentation tracking
 #                September 15, 2012 - Additional bug fixes
 #                March 11, 2014     - updated to arcpy for V2.0
+#                March 6, 2015      - Added code to remove spaces from habitat feature layer name used as a base for temporary join feature class name
 #
 # ---------------------------------------------------------------------------
 
@@ -105,9 +106,8 @@ try:
 
     # Local variables...
     desc = arcpy.Describe(inLayer)
-    if desc.DataType == "FeatureLayer":
-        inLayer = inLayer.split(os.sep)[-1]
-        inBase = inLayer
+    if desc.dataType == "FeatureLayer":
+        inBase = ARD_HEA_Tools.sanitize(inLayer.split(os.sep)[-1])
     else:
         inBase = desc.BaseName
     AnalysisGrid = geoDB + "\\ANALYSIS_GRID"
@@ -147,7 +147,7 @@ try:
     
     # Process: Check to see if polygons intersect with grid...
     arcpy.AddMessage("Intersecting with grid...")
-    arcpy.MakeFeatureLayer_management(geoDB + "\\ANALYSIS_PNTS", "tmpLyr")
+    arcpy.MakeFeatureLayer_management(AnalysisPnts, "tmpLyr")
     arcpy.SelectLayerByLocation_management("tmpLyr", "INTERSECT", inLayer)
     result = arcpy.GetCount_management("tmpLyr")
     if int(result.getOutput(0)) == 0:
@@ -157,6 +157,7 @@ try:
     # Process: Spatial join with grid points
     arcpy.AddMessage("Joining...")
     arcpy.SpatialJoin_analysis(AnalysisPnts, inLayer, inJoin, "JOIN_ONE_TO_ONE", "KEEP_ALL")
+    arcpy.AddMessage("finished join")
 
     # Process: Update temporary attribute table...
     result = arcpy.GetCount_management(SiteAttr)
