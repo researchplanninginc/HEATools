@@ -22,10 +22,13 @@
 #                January 2, 2013    - Removed 9.3 python instantiation to avoid "ExtractValuesToPoints" bug
 #                March 7, 2014      - Updated arcpy to 10.2 for V2.0
 #                March 10, 2014     - Fixed error handling when data have not been filtered
+#                March 5, 2015      - Added a check to see if contaminant surfaces match analysis grid
 #
 # ---------------------------------------------------------------------------
 
 class filtered(Exception):
+    pass
+class unmatched(Exception):
     pass
 
 # Import system modules
@@ -65,6 +68,7 @@ try:
     env.workspace = geoDB
     xmlDoc = currDir + "\\temp.xml"
     COCInvent = geoDB + "\\COC_INVENTORY"
+    prjAttr = geoDB + "\\PROJECT_ATTRIBUTES"
 
     # Set the geoprocessing environment
     arcpy.overwriteOutput = 1
@@ -85,27 +89,43 @@ try:
         
         # Check if COC has been updated in inventory table
         rows = arcpy.SearchCursor(COCInvent, "[INTERP_LAYER_NAME] = '" + COCRasterName + "'")
-	COCField = "empty"
-	row = rows.next()
-	while row:
-	    COCField = row.COC_NAME
-	    row = rows.next()
+        COCField = "empty"
+        row = rows.next()
+        while row:
+            COCField = row.COC_NAME
+            row = rows.next()
         del row
         del rows
-	if COCField == "empty":
-	    raise filtered
+        if COCField == "empty":
+            raise filtered
+        
+        # Process: Check for discrepancies in size of contaminant surface and analysis grid
+        COCNulls = IsNull(COCRaster)
+        rowsGrid = arcpy.SearchCursor(COCNulls)
+        for rowGrid in rowsGrid:
+            val = rowGrid.VALUE
+            if val==0:
+                numSfcCells = int(rowGrid.COUNT)
+        cursor = arcpy.da.SearchCursor(prjAttr, ("TOTAL_CELLS"))
+        row = cursor.next()
+        numAGridCells = row[0]
+        if numSfcCells != numAGridCells:
+            arcpy.AddMessage("surface cells: " + str(numSfcCells) + ", analysis grid: " + str(numAGridCells))
+            arcpy.Delete_management(COCExtract)
+            raise unmatched
+        del row, cursor, rowGrid, rowsGrid
+
+        # Process: Extract Values to Points...
+        arcpy.AddMessage("Extracting " + COCField + " data from " + str(COCRasterName))
+        arcpy.Copy_management(geoDB + "\\ANALYSIS_PNTS", COCExtract)
+        ExtractMultiValuesToPoints(COCExtract, [[COCRaster, "COC_VALUE"]], "NONE")
            
         # Process: Remove existing records in COC Data table...
         arcpy.AddMessage("\nRemove any pre-existing " + COCField + " records from data tables...")
         rows = arcpy.UpdateCursor(geoDB + "\\COC_DATA", "[COC_NAME] = '" + COCField + "'")
         for row in rows:
             rows.deleteRow(row)
-        del rows
-
-        # Process: Extract Values to Points...
-        arcpy.AddMessage("Extracting " + COCField + " data from " + str(COCRasterName))
-        arcpy.Copy_management(geoDB + "\\ANALYSIS_PNTS", COCExtract)
-        ExtractMultiValuesToPoints(COCExtract, [[COCRaster, "COC_VALUE"]], "NONE")
+        del row, rows
 
         # Process: Add Fields...
         arcpy.AddField_management(COCExtract, "COC_NAME", "TEXT", "", "", "20", "", "NULLABLE", "REQUIRED", "")
@@ -130,8 +150,12 @@ try:
         arcpy.Delete_management(InTable)
     
 except filtered:
-    arcpy.AddError("\n*** ERROR ***\nInput features for raster layer: " + COCRaster + " have not been filtered or entry is missing from COC_INVENTORY table")
-    print "\n*** ERROR ***\nInput features for raster layer: " + COCRaster + " have not been filtered or entry is missing from COC_INVENTORY table"
+    arcpy.AddError("\n*** ERROR ***\nInput features for raster layer " + COCRaster + " have not been filtered or entry is missing from COC_INVENTORY table")
+    print "\n*** ERROR ***\nInput features for raster layer " + COCRaster + " have not been filtered or entry is missing from COC_INVENTORY table"
+    
+except unmatched:
+    arcpy.AddError("\n*** ERROR ***\nSize of raster layer " + COCRaster + " does not match the size of ANALYSIS_GRID")
+    print "\n*** ERROR ***\nSize of raster layer " + COCRaster + " does not match the size of ANALYSIS_GRID"
     
 except arcpy.ExecuteError:
     # Get the geoprocessing error messages

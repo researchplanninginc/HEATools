@@ -14,7 +14,7 @@
 #
 # Date Created: July 15, 2014
 #
-# Date Modified: 
+# Date Modified: March 5, 2015     - Added code to load footprints into COC_DATA table
 #
 # ---------------------------------------------------------------------------
 
@@ -51,6 +51,7 @@ try:
     # Local variables...
     usrTbl = geoDB + "\\USER_THRESHOLDS"
     COCTbl = geoDB + "\\COC_DATA"
+    arcpy.AddMessage("table " + COCTbl)
     footprints = geoDB + "\\FOOTPRINTS"
 
     # Set the geoprocessing environment
@@ -90,16 +91,37 @@ try:
             COC_FP = geoDB + "\\" + COCName + "SC" + ScenID + "_footprint"
             arcpy.Copy_management(geoDB + "\\ANALYSIS_PNTS", COC_FP)
             ExtractMultiValuesToPoints(COC_FP, [[FPRaster, "FOOTPRINT_ID"]], "NONE")
+
+            # Add footprints to COC_DATA table
+            arcpy.AddMessage("Adding footprints to COC_DATA table")
+            joinfields = ['GRID_ID', 'FOOTPRINT_ID']
+            joindict = {}
+            with arcpy.da.SearchCursor(COC_FP, joinfields) as rows:
+                for arow in rows:
+                    joinval = arow[0]
+                    val1 = arow[1]
+                    joindict[joinval]=val1
+            del arow, rows
+            targetflds = ['GRID_ID', 'FOOTPRINT_ID']
+            expression2 = arcpy.AddFieldDelimiters(COCTbl, "COC_NAME") + " = '" + COCName + "'"
+            with arcpy.da.UpdateCursor(COCTbl, targetflds, where_clause=expression2) as recs:
+                for rec in recs:
+                    keyval = rec[0]
+                    rec[1] = joindict[keyval]
+                    recs.updateRow(rec)
+            del rec, recs
+	    
 	    arcpy.AddField_management(COC_FP, "SCENARIO_ID", "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
 	    arcpy.CalculateField_management(COC_FP, "SCENARIO_ID", ScenID)
 	    arcpy.AddField_management(COC_FP, "COC_NAME", "TEXT", "", "", "20", "", "NULLABLE", "NON_REQUIRED", "")
 	    arcpy.CalculateField_management(COC_FP, "COC_NAME", '"' + COCName + '"')
+                
+        # Make a table view of the points and append to FOOTPRINTS table
+        arcpy.MakeTableView_management(COC_FP, "fp_view") 
+        arcpy.Append_management("fp_view", footprints, "NO_TEST")
+        arcpy.Delete_management(COC_FP)
 
-            # Make a table view of the points and append to FOOTPRINTS table
-	    arcpy.MakeTableView_management(COC_FP, "fp_view") 
-	    arcpy.Append_management("fp_view", footprints, "NO_TEST")
-	    arcpy.Delete_management(COC_FP)
-
+    del row, cursor
     
 
 except arcpy.ExecuteError:

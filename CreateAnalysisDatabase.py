@@ -24,6 +24,8 @@
 #                September 15, 2012 - Changed to create project folder and geoDB within, Additional bug fixes
 #                September 17, 2013 - Converted to arcpy
 #                July 21, 2014      - Added a FOOTPRINTS table for contaminant slices
+#                March 4, 2015      - Added FOOTPRINT_ID field back into COC_DATA table
+#                March 6, 2015      - Changed some fields to REQUIRED and NON_NULLABLE
 #
 # ---------------------------------------------------------------------------
 
@@ -74,7 +76,7 @@ try:
 
     # Add fields to contaminant data table...
     arcpy.AddField_management(prjAttr, "CELL_SIZE", "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
-    arcpy.AddField_management(prjAttr, "TOTAL_CELLS", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+    arcpy.AddField_management(prjAttr, "TOTAL_CELLS", "LONG", "", "", "", "", "NON_NULLABLE", "REQUIRED", "")
     arcpy.AddField_management(prjAttr, "UNITS", "TEXT", "", "", "10", "", "NULLABLE", "NON_REQUIRED", "")
     arcpy.AddField_management(prjAttr, "ANALYST", "TEXT", "", "", "50", "", "NULLABLE", "NON_REQUIRED", "")
     arcpy.AddField_management(prjAttr, "SITE_HABITAT_DOC", "TEXT", "", "", "25000", "", "NULLABLE", "NON_REQUIRED", "")
@@ -87,9 +89,10 @@ try:
     arcpy.CreateTable_management(geoDB, "COC_DATA", "", "")
 
     # Add fields and indexes to contaminant data table...
-    arcpy.AddField_management(COCData, "GRID_ID", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
-    arcpy.AddField_management(COCData, "COC_NAME", "TEXT", "", "", "20", "", "NULLABLE", "NON_REQUIRED", "")
-    arcpy.AddField_management(COCData, "COC_VALUE", "FLOAT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+    arcpy.AddField_management(COCData, "GRID_ID", "LONG", "", "", "", "", "NON_NULLABLE", "REQUIRED", "")
+    arcpy.AddField_management(COCData, "COC_NAME", "TEXT", "", "", "20", "", "NON_NULLABLE", "REQUIRED", "")
+    arcpy.AddField_management(COCData, "COC_VALUE", "FLOAT", "", "", "", "", "NON_NULLABLE", "REQUIRED", "")
+    arcpy.AddField_management(COCData, "FOOTPRINT_ID", "LONG", "", "", "", "", "NULLABLE", "REQUIRED", "")
     arcpy.AddIndex_management(COCData, "GRID_ID", "CDAT_GRD_IDX", "NON_UNIQUE", "NON_ASCENDING")
     arcpy.AddIndex_management(COCData, "COC_NAME", "CDAT_NAM_IDX", "NON_UNIQUE", "NON_ASCENDING")
 
@@ -123,7 +126,7 @@ try:
     arcpy.CreateTable_management(geoDB, "SITE_ATTRIBUTES", "", "")
 
     # Add fields to site attribute table...
-    arcpy.AddField_management(SiteAttr, "GRID_ID", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+    arcpy.AddField_management(SiteAttr, "GRID_ID", "LONG", "", "", "", "", "NON_NULLABLE", "REQUIRED", "")
     arcpy.AddField_management(SiteAttr, "HABITAT_ID", "TEXT", "", "", "50", "", "NON_NULLABLE", "REQUIRED", "")
     arcpy.AddField_management(SiteAttr, "CONDITION_ID", "TEXT", "", "", "2", "", "NON_NULLABLE", "REQUIRED", "")
     arcpy.AddField_management(SiteAttr, "REMEDIATION_ID", "TEXT", "", "", "50", "", "NON_NULLABLE", "REQUIRED", "")

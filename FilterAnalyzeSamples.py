@@ -24,7 +24,7 @@
 # Notes:  Currently the tool is designed to only be run via the ARD HEA Toolbox.
 #
 # Date Created: February 3, 2010
-# Date V 2.0 Modified: March 2, 2010      - Filter locations where no sample was taken for contaminant (-999.99)
+# Date V 1.0 Modified: March 2, 2010      - Filter locations where no sample was taken for contaminant (-999.99)
 #                                   - Added capability to handle multiple contaminants contained in a single file
 #                      March 3, 2010      - Added capability to log transform contaminant values
 #                      March 8, 2010      - Consolidated ANALYSIS_TABLE and COC_INVENTORY tables
@@ -37,6 +37,8 @@
 #                      June 1, 2011       - Edited for Arc 10.0 functionality
 #                      September 15, 2012 - Changed to utilize user supplied contaminant name, Additional bug fixes
 # Date V 2.0 Modified: September 17, 2013 - Converted to arcpy for V2.0 and upgraded metadata xml files
+#                      February 16, 2015  - Added code to sanitize the contaminant name if it starts with spaces or numbers
+#                      
 # ---------------------------------------------------------------------------
 
 class unprojected(Exception):
@@ -81,12 +83,13 @@ try:
     desc = arcpy.Describe(COCLayer)
     scriptPath = sys.path[0]
     xmlTemp = scriptPath + "\\filtered_metadata_template.xml"
+    COCLayerN = COCLayer.split(os.sep)[-1]
     if desc.DataType == "FeatureLayer":
-        COCLayer = COCLayer.split(os.sep)[-1]
-        COCLayerBase = COCLayer
+        COCLayerBase = COCLayerN
     else:
-        COCLayerBase = desc.Basename
-    COCLayerOut = geoDB + "\\" + COCLayerBase + "_Layer"
+        COCLayerBase = COCLayerN.split(".")[0]
+    #COCLayerBase = ARD_HEA_Tools.sanitize(COCLayerBase)
+    COCLayerOut = geoDB + "\\" + ARD_HEA_Tools.sanitize(COCLayerBase) + "_Layer"
     COCStats = geoDB + "\\" + ARD_HEA_Tools.sanitize(COCName) + "_Stats"
     COCFieldStat = COCField + " " + STATType
     COCStatsLyr = ARD_HEA_Tools.sanitize(COCName) + "_Stats_Layer"
