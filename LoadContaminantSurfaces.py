@@ -125,7 +125,7 @@ try:
         rows = arcpy.UpdateCursor(geoDB + "\\COC_DATA", "[COC_NAME] = '" + COCField + "'")
         for row in rows:
             rows.deleteRow(row)
-        del row, rows
+        del rows
 
         # Process: Add Fields...
         arcpy.AddField_management(COCExtract, "COC_NAME", "TEXT", "", "", "20", "", "NULLABLE", "REQUIRED", "")
