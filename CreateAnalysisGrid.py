@@ -29,6 +29,8 @@
 #                      September 15, 2012 - Changed to utilize user supplied contaminant name, Additional bug fixes
 #
 # Date V 2.0 Modified: September 17, 2013 - Changed to arcpy
+#                      March 6, 2015      - Added code to update SITE_ATTRIBUTES table with GRID_IDs
+#                      March 10, 2015     - Added code to update all fields in SITE_ATTRIBUTES table with "NA" S
 # ---------------------------------------------------------------------------
 
 class unprojected(Exception):
@@ -141,11 +143,12 @@ try:
     # Process: Delete Field
     arcpy.DeleteField_management(AnalysisPnts, "POINTID;GRID_CODE")
 
-    # Process: Load GRID_IDs into SITE_ATTRIBUTES table
+    # Process: Load GRID_IDs and NA values into SITE_ATTRIBUTES table
+    Fields = ["GRID_ID", "HABITAT_ID", "CONDITION_ID", "REMEDIATION_ID", "SUBSITE_ID", "DEPTH_ID"]
     rows = arcpy.da.SearchCursor(AnalysisPnts, "GRID_ID")
-    cursor = arcpy.da.InsertCursor(SiteAttr, "GRID_ID")
+    cursor = arcpy.da.InsertCursor(SiteAttr, Fields)
     for row in rows:
-        vals = [(row[0])]
+        vals = [(row[0]), 'NA', 'NA', 'NA', 'NA', 'NA']
         cursor.insertRow(vals)
     del cursor
     del rows
