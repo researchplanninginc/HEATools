@@ -200,7 +200,7 @@ try:
             conList.append(str(row.getValue("CONDITION_ID")))
             remList.append(str(row.getValue("REMEDIATION_ID")))
             subList.append(str(row.getValue("SUBSITE_ID")))
-            depList.append(str(row.getValue("DEPTH")))
+            depList.append(str(row.getValue("DEPTH_ID")))
             row = rows.next()
         habSet = set(habList)
         conSet = set(conList)
