@@ -24,13 +24,14 @@
 #         will only load one attribute by design.
 #
 # Date Created: March 7, 2010
-# Date Modified: March 16, 2010     - Added ability to update SITE_ATTRIBUTE data table allowing the tool to be run for multiple layers
+# Date Modified: March 16, 2010     - Added ability to update SITE_ATTRIBUTES data table allowing the tool to be run for multiple layers
 #                October 27, 2010   - Changed code to replace Intersect and JoinField GP commands with SpatialJoin and AddJoin respectively to avoid use of ArcINFO license
 #                November 16, 2010  - Added filters for all non-letter or digit characters except underscores
 #                June 1, 2011       - Edited for Arc 10.0 functionality, added site attribute documentation tracking
 #                September 15, 2012 - Additional bug fixes
 #                March 11, 2014     - updated to arcpy for V2.0
 #                March 6, 2015      - Added code to remove spaces from habitat feature layer name used as a base for temporary join feature class name
+#                March 11, 2015     - added code to check if depth field in the SITE_ATTRIBUTES table is called "DEPTH" (legacy) or "DEPTH_ID"
 #
 # ---------------------------------------------------------------------------
 
@@ -158,6 +159,14 @@ try:
     arcpy.AddMessage("Joining...")
     arcpy.SpatialJoin_analysis(AnalysisPnts, inLayer, inJoin, "JOIN_ONE_TO_ONE", "KEEP_ALL")
     arcpy.AddMessage("finished join")
+    
+    # Determine what the depth field is called in the SITE_ATTRIBUTES table
+    fieldList = arcpy.ListFields(SiteAttr)
+    for fld in fieldList:
+        if fld.name == "DEPTH_ID":
+            DepthFld = "DEPTH_ID"
+        elif fld.name == "DEPTH":
+            DepthFld = "DEPTH"
 
     # Process: Update temporary attribute table...
     result = arcpy.GetCount_management(SiteAttr)
@@ -205,7 +214,7 @@ try:
             if subSite <> "-not applicable-":
                 updatecursorvalue(subSite, "SUBSITE_ID", "NA")
             if depth <> "-not applicable-":
-                updatecursorvalue(depth, "DEPTH_ID", "-999.9")
+                updatecursorvalue(depth, DepthFld, "-999.9")
             rows.updateRow(row)
             row = rows.next()
         del row
@@ -230,7 +239,7 @@ try:
             if subSite <> "-not applicable-":
                 insertcursorvalue(subSite, "SUBSITE_ID", "NA")                  
             if depth <> "-not applicable-":
-                insertcursorvalue(depth, "DEPTH_ID", "-999.9")  
+                insertcursorvalue(depth, DepthFld, "-999.9")  
             rowsSite.insertRow(rowSite)
             rowJoin = rowsJoin.next()
         del rowSite

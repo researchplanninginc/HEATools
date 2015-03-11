@@ -16,6 +16,7 @@
 # Date Modified: June 1, 2011       - Edited for Arc 10.0 functionality
 #                September 15, 2012 - Changed to utilize user supplied contaminant name, Additional bug fixes
 #                March 7, 2014      - converted to arcpy for V2
+#                March 11, 2015     - added code to check if depth field in the SITE_ATTRIBUTES table is called "DEPTH" (legacy) or "DEPTH_ID"
 #
 # ---------------------------------------------------------------------------
 
@@ -193,6 +194,12 @@ try:
         remList = []
         subList = []
         depList = []
+        fieldList = arcpy.ListFields(SiteAttr)
+        for fld in fieldList:
+            if fld.name == "DEPTH_ID":
+                DepthFld = "DEPTH_ID"
+            elif fld.name == "DEPTH":
+                DepthFld = "DEPTH"
         rows = arcpy.SearchCursor(SiteAttr)
         row = rows.next()
         while row:
@@ -200,7 +207,7 @@ try:
             conList.append(str(row.getValue("CONDITION_ID")))
             remList.append(str(row.getValue("REMEDIATION_ID")))
             subList.append(str(row.getValue("SUBSITE_ID")))
-            depList.append(str(row.getValue("DEPTH_ID")))
+            depList.append(str(row.getValue(DepthFld)))
             row = rows.next()
         habSet = set(habList)
         conSet = set(conList)

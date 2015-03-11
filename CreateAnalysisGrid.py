@@ -30,7 +30,9 @@
 #
 # Date V 2.0 Modified: September 17, 2013 - Changed to arcpy
 #                      March 6, 2015      - Added code to update SITE_ATTRIBUTES table with GRID_IDs
-#                      March 10, 2015     - Added code to update all fields in SITE_ATTRIBUTES table with "NA" S
+#                      March 10, 2015     - Added code to update all fields except GRID_ID in SITE_ATTRIBUTES table with "NA"
+#                      March 11, 2015     - added code to check if depth field in the SITE_ATTRIBUTES table is called "DEPTH" (legacy) or "DEPTH_ID"
+#
 # ---------------------------------------------------------------------------
 
 class unprojected(Exception):
@@ -144,7 +146,14 @@ try:
     arcpy.DeleteField_management(AnalysisPnts, "POINTID;GRID_CODE")
 
     # Process: Load GRID_IDs and NA values into SITE_ATTRIBUTES table
-    Fields = ["GRID_ID", "HABITAT_ID", "CONDITION_ID", "REMEDIATION_ID", "SUBSITE_ID", "DEPTH_ID"]
+    #          First check if depth field is DEPTH (legacy) or DEPTH_ID
+    fieldList = arcpy.ListFields(SiteAttr)
+    for fld in fieldList:
+        if fld.name == "DEPTH_ID":
+            DepthFld = "DEPTH_ID"
+        elif fld.name == "DEPTH":
+            DepthFld = "DEPTH"
+    Fields = ["GRID_ID", "HABITAT_ID", "CONDITION_ID", "REMEDIATION_ID", "SUBSITE_ID", DepthFld]
     rows = arcpy.da.SearchCursor(AnalysisPnts, "GRID_ID")
     cursor = arcpy.da.InsertCursor(SiteAttr, Fields)
     for row in rows:
